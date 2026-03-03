@@ -3,7 +3,7 @@
 /**
  * Login page — Notion-inspired centered card with Google Sign-In.
  */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mic } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -12,11 +12,28 @@ import Spinner from "@/components/ui/Spinner";
 export default function LoginPage() {
     const { user, loading, signInWithGoogle } = useAuth();
     const router = useRouter();
+    const [loginError, setLoginError] = useState<string | null>(null);
 
     // Already logged in → go to dashboard
     useEffect(() => {
         if (!loading && user) router.push("/dashboard");
     }, [user, loading, router]);
+
+    const handleLogin = async () => {
+        try {
+            setLoginError(null);
+            await signInWithGoogle();
+        } catch (error: any) {
+            console.error(error);
+            if (error?.code === "auth/unauthorized-domain") {
+                setLoginError("O domínio não está autorizado no Firebase. Adicione " + window.location.hostname + " em Authentication > Settings > Authorized Domains no painel do Firebase.");
+            } else if (error?.code === "auth/popup-closed-by-user") {
+                setLoginError(null); // Ignorar, o usuário só fechou o popup
+            } else {
+                setLoginError(error?.message || "Erro ao fazer login com o Google.");
+            }
+        }
+    };
 
     if (loading) {
         return (
@@ -50,9 +67,15 @@ export default function LoginPage() {
                         Suas reuniões, finalmente organizadas.
                     </p>
 
+                    {loginError && (
+                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-[13px] text-center">
+                            {loginError}
+                        </div>
+                    )}
+
                     {/* Google Sign-In button */}
                     <button
-                        onClick={signInWithGoogle}
+                        onClick={handleLogin}
                         className="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-lg border border-[var(--notion-border)] bg-white hover:bg-[var(--notion-hover)] transition-colors text-[14px] font-medium text-[var(--notion-text)] focus-visible:ring-2 focus-visible:ring-[var(--notion-accent)]"
                         aria-label="Entrar com Google"
                     >

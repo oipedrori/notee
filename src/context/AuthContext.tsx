@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import {
     User,
     onAuthStateChanged,
-    signInWithRedirect,
+    signInWithPopup,
     signOut as firebaseSignOut,
 } from "firebase/auth";
 import { getClientAuth, googleProvider } from "@/lib/firebase";
@@ -44,7 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signInWithGoogle = async () => {
-        await signInWithRedirect(getClientAuth(), googleProvider);
+        // Return the promise so the caller can handle errors (like unauthorized domain)
+        await signInWithPopup(getClientAuth(), googleProvider);
     };
 
     const signOut = async () => {
@@ -59,3 +60,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
+
